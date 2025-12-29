@@ -8,7 +8,7 @@
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
     "module": "esnext",
-     "moduleResolution": "node",
+    "moduleResolution": "node",
     "target": "es2023",
     "types": [],
     // For nodejs:
@@ -41,8 +41,8 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
-     "esModuleInterop": true,
+    "esModuleInterop": true
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules","dist","src/generated"]
+  "exclude": ["node_modules", "dist", "generated/prisma"]
 }
