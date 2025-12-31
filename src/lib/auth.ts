@@ -44,11 +44,12 @@ export const auth = betterAuth({
     requireEmailVerification: true,
   },
   emailVerification: {
-    sendOnSignUp:true,
+    sendOnSignUp: true,
+    autoSignInAfterVerification:true,
     sendVerificationEmail: async ({ user, url, token }, request) => {
       try {
         const verificationUrl = `${process.env.APP_URL}/verify-email?token=${token}`;
-      const htmlTemplate = `
+        const htmlTemplate = `
     <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 10px; overflow: hidden;">
       <div style="background-color: #4f46e5; padding: 20px; text-align: center;">
         <h1 style="color: #fff; margin: 0; font-size: 24px;">Verify Your Email</h1>
@@ -71,19 +72,27 @@ export const auth = betterAuth({
       </div>
     </div>
   `;
-      const info = await transporter.sendMail({
-        from: '"Prisma Blog" <prismablog@ph.com>',
-        to: user.email,
-        subject: "Verify your email for Prisma Blog",
-        text: `Please verify your email by clicking here: ${verificationUrl}`, // Plain-text fallback
-        html: htmlTemplate,
-      });
+        const info = await transporter.sendMail({
+          from: '"Prisma Blog" <prismablog@ph.com>',
+          to: user.email,
+          subject: "Verify your email for Prisma Blog",
+          text: `Please verify your email by clicking here: ${verificationUrl}`, // Plain-text fallback
+          html: htmlTemplate,
+        });
 
-      console.log("Message sent:", info.messageId);
+        console.log("Message sent:", info.messageId);
       } catch (error) {
-        console.log(error)
+        console.log(error);
         throw error;
       }
     },
   },
+  socialProviders: {
+        google: { 
+            prompt:"select_account consent",
+            accessType:"offline",
+            clientId: process.env.GOOGLE_CLIENT_ID as string, 
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET as string, 
+        }, 
+    }, 
 });
