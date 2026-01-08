@@ -1,4 +1,8 @@
-import { Post, PostStatus } from "../../../generated/prisma/client";
+import {
+  CommentStatus,
+  Post,
+  PostStatus,
+} from "../../../generated/prisma/client";
 import { PostWhereInput } from "../../../generated/prisma/models";
 import { prisma } from "../../lib/prisma";
 
@@ -25,20 +29,20 @@ const getAllPost = async ({
   limit,
   skip,
   sortBy,
-  sortOrder
+  sortOrder,
 }: {
-  search: string | undefined,
-  tags: string[] | [],
-  isFeatured : boolean | undefined,
-  status:PostStatus | undefined,
-  authorId:string | undefined,
-  page:number,
-  limit:number,
-  skip:number,
-  sortBy:string ,
-  sortOrder:string 
+  search: string | undefined;
+  tags: string[] | [];
+  isFeatured: boolean | undefined;
+  status: PostStatus | undefined;
+  authorId: string | undefined;
+  page: number;
+  limit: number;
+  skip: number;
+  sortBy: string;
+  sortOrder: string;
 }) => {
-  const andConditions:PostWhereInput[] = [];
+  const andConditions: PostWhereInput[] = [];
 
   if (search) {
     andConditions.push({
@@ -72,71 +76,108 @@ const getAllPost = async ({
     });
   }
 
-  if(typeof isFeatured === 'boolean'){
+  if (typeof isFeatured === "boolean") {
     andConditions.push({
-      isFeatured
-    })
+      isFeatured,
+    });
   }
 
-  if(status){
-    andConditions.push({status})
+  if (status) {
+    andConditions.push({ status });
   }
 
-  if(authorId){
+  if (authorId) {
     andConditions.push({
-      authorId
-    })
+      authorId,
+    });
   }
 
   const allPost = await prisma.post.findMany({
-    take:limit,
+    take: limit,
     skip,
     where: {
       AND: andConditions,
     },
     orderBy: {
-      [sortBy]:sortOrder
+      [sortBy]: sortOrder,
+    },
+    include:{
+      _count:{
+        select:{comments:true}
+      }
     }
   });
 
   const total = await prisma.post.count({
     where: {
       AND: andConditions,
-    }
-  })
+    },
+  });
 
   return {
-    data:allPost,
-    pagination:{
+    data: allPost,
+    pagination: {
       total,
       page,
       limit,
-      totalPages:Math.ceil(total/limit)
-    }
+      totalPages: Math.ceil(total / limit),
+    },
   };
 };
 
-
-const getPostById = async(postId:string)=>{
-  return await prisma.$transaction(async(tx)=>{
+const getPostById = async (postId: string) => {
+  return await prisma.$transaction(async (tx) => {
     const updateViewCount = await tx.post.update({
-    where:{
-      id:postId
-    },
-    data:{
-      views:{
-        increment:1 
-      }
-    }
-  })
-  const postData = await tx.post.findUnique({
-    where:{
-      id:postId
-    }
-  })
-  return postData
-  })
-  
-}
+      where: {
+        id: postId,
+      },
+      data: {
+        views: {
+          increment: 1,
+        },
+      },
+    });
+    const postData = await tx.post.findUnique({
+      where: {
+        id: postId,
+      },
+      include: {
+        comments: {
+          where: {
+            parentId: null,
+            status: CommentStatus.APPROVED,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+          include: {
+            replies: {
+              where: {
+                status: CommentStatus.APPROVED,
+              },
+              orderBy: {
+                createdAt: "asc",
+              },
+              include: {
+                replies: {
+                  where: {
+                    status: CommentStatus.APPROVED,
+                  },
+                  orderBy: {
+                    createdAt: "asc",
+                  },
+                },
+              },
+            },
+          },
+        },
+        _count: {
+          select: { comments: true },
+        },
+      },
+    });
+    return postData;
+  });
+};
 
-export const postService = { createPost, getAllPost ,getPostById};
+export const postService = { createPost, getAllPost, getPostById };

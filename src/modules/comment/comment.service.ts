@@ -7,17 +7,17 @@ const createComment = async (payload: {
   parentId?: string;
 }) => {
   await prisma.post.findUniqueOrThrow({
-    where:{
-      id:payload.postId
-    }
-  })
+    where: {
+      id: payload.postId,
+    },
+  });
 
-  if(payload.parentId){
-  await prisma.comment.findUniqueOrThrow({
-      where:{
-        id:payload.parentId
-      }
-    })
+  if (payload.parentId) {
+    await prisma.comment.findUniqueOrThrow({
+      where: {
+        id: payload.parentId,
+      },
+    });
   }
 
   return await prisma.comment.create({
@@ -25,4 +25,44 @@ const createComment = async (payload: {
   });
 };
 
-export const commentService = { createComment };
+const getCommentById = async (id: string) => {
+  return await prisma.comment.findUnique({
+    where: {
+      id: id,
+    },
+    include: {
+      post: {
+        select: {
+          id: true,
+          title: true,
+          views: true,
+        },
+      },
+    },
+  });
+};
+
+const getCommentsByAuthor = async (authorId: string) => {
+  return await prisma.comment.findMany({
+    where:{
+      authorId
+    },
+    orderBy:{
+      createdAt:'desc'
+    },
+    include:{
+      post:{
+        select:{
+          id:true,
+          title:true
+        }
+      }
+    }
+  })
+};
+
+export const commentService = {
+  createComment,
+  getCommentById,
+  getCommentsByAuthor,
+};
