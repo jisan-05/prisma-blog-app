@@ -40,7 +40,10 @@ model Comment {
   parentId String?
   parent   Comment?      @relation("CommentReplies", fields: [parentId], references: [id])
   replies  Comment[]     @relation("CommentReplies")
+
   status   CommentStatus @default(APPROVED)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([postId])
   @@index([authorId])
