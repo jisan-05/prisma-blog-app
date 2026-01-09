@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { postService } from "./post.service";
 import { Post, PostStatus } from "../../../generated/prisma/client";
 import paginationSortingHelper from "../../helpers/paginationSortingHelper";
+import { UserRole } from "../../middlewares/auth";
 
 const createPost = async (req: Request, res: Response) => {
   try {
@@ -111,16 +112,57 @@ const updatePost = async (req: Request, res: Response) => {
       throw new Error("You are Unauthorized ");
     }
     const { postId } = req.params;
-
+    const isAdmin = user.role === UserRole.ADMIN;
+    console.log(user);
     const result = await postService.updatePost(
       postId as string,
       req.body,
-      user.id
+      user.id,
+      isAdmin
     );
     res.status(201).json(result);
   } catch (error) {
     const errorMessage =
-      error instanceof Error ? error.message : "Comment update failed!";
+      error instanceof Error ? error.message : "post update failed!";
+    res.status(400).json({
+      error: errorMessage,
+      details: error,
+    });
+  }
+};
+
+const deletePost = async (req: Request, res: Response) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      throw new Error("You are Unauthorized ");
+    }
+    const { postId } = req.params;
+    const isAdmin = user.role === UserRole.ADMIN;
+    console.log(user);
+    const result = await postService.deletePost(
+      postId as string,
+      user.id,
+      isAdmin
+    );
+    res.status(201).json(result);
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "post delete failed!";
+    res.status(400).json({
+      error: errorMessage,
+      details: error,
+    });
+  }
+};
+
+const getStats = async (req: Request, res: Response) => {
+  try {
+    const result = await postService.getStats();
+    res.status(201).json(result);
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Stats fetch failed!";
     res.status(400).json({
       error: errorMessage,
       details: error,
@@ -133,5 +175,7 @@ export const PostController = {
   getAllPost,
   getPostById,
   getMyPosts,
-  updatePost
+  updatePost,
+  deletePost,
+  getStats
 };
