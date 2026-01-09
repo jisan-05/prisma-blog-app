@@ -74,7 +74,7 @@ const getPostById = async (req: Request, res: Response) => {
   try {
     const { postId } = req.params;
     if (!postId) {
-      throw new Error("Post Id is Required")
+      throw new Error("Post Id is Required");
     }
     const result = await postService.getPostById(postId);
     res.status(201).json(result);
@@ -88,9 +88,9 @@ const getPostById = async (req: Request, res: Response) => {
 
 const getMyPosts = async (req: Request, res: Response) => {
   try {
-    const user = req.user
-    if(!user){
-      throw new Error("You are Unauthorized ")
+    const user = req.user;
+    if (!user) {
+      throw new Error("You are Unauthorized ");
     }
     console.log(user);
     const result = await postService.getMyPosts(user?.id);
@@ -104,9 +104,34 @@ const getMyPosts = async (req: Request, res: Response) => {
   }
 };
 
+const updatePost = async (req: Request, res: Response) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      throw new Error("You are Unauthorized ");
+    }
+    const { postId } = req.params;
+
+    const result = await postService.updatePost(
+      postId as string,
+      req.body,
+      user.id
+    );
+    res.status(201).json(result);
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Comment update failed!";
+    res.status(400).json({
+      error: errorMessage,
+      details: error,
+    });
+  }
+};
+
 export const PostController = {
   createPost,
   getAllPost,
   getPostById,
-  getMyPosts  
+  getMyPosts,
+  updatePost
 };
